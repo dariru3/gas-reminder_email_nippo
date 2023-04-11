@@ -26,7 +26,7 @@ function sendReminderEmails() {
           htmlBody.oldMemberName = oldMemberName;
           const finalHtmlBody = htmlBody.evaluate().getContent();
           console.log(subject)
-          console.log(finalHtmlBody)
+          // console.log(finalHtmlBody)
 
           GmailApp.sendEmail("daryl.villalobos@link-cc.co.jp", subject, "test", {htmlBody: finalHtmlBody})
         }
@@ -34,12 +34,3 @@ function sendReminderEmails() {
     }
   }
 }
-
-/*
-function createTrigger() {
-  ScriptApp.newTrigger('sendReminderEmails')
-    .timeBased()
-    .everyDays(1)
-    .create();
-}
-*/
