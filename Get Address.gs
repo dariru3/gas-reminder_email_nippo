@@ -3,13 +3,13 @@ function getEmailFromName_(name) {
   const emailNameList = referenceSheet.getRange("A:B").getValues();
   name = name.trim();
 
-  const nameLookup = {}; // dictionary for easier lookup
-  emailNameList.forEach(row => {nameLookup[row[0]] = row[1]});
-  console.log(nameLookup)
+  const emailLookup = {}; // dictionary for easier lookup
+  emailNameList.forEach(row => {emailLookup[row[0]] = row[1]});
+  // console.log(nameLookup)
 
-  if (name != "" && name in nameLookup) {
-    console.log("Name:", nameLookup[name]);
-    return nameLookup[name];
+  if (name != "" && name in emailLookup) {
+    // console.log("Email:", emailLookup[name]);
+    return emailLookup[name];
   } else {
     console.error("Email address not found.");
   }

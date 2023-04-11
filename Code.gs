@@ -1,5 +1,5 @@
 function sendReminderEmails() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("シート1")
   const numRows = sheet.getLastRow();
   const numCols = sheet.getLastColumn();
   const currentDate = new Date();
@@ -14,23 +14,21 @@ function sendReminderEmails() {
     if (dateString === currentDateString) {
       dateFound = true
       for (let col = 5; col <= numCols; col++) {
-        // const oldMemberEmail = sheet.getRange(row, col).getValue();
         const newMemberName = sheet.getRange(5, col).getValue();
         const oldMemberName = sheet.getRange(row, col).getValue();
-        console.log("new:", newMemberName, "old:", oldMemberName);
+        const email = getEmailFromName_(oldMemberName);
+        console.log("new:", newMemberName, "old:", oldMemberName, "email:", email);
 
         if (newMemberName && oldMemberName) {
-          const subject = `Reminder: Welcome New Member ${newMemberName}`;
-          const body = `Hi ${oldMemberName},
-This is a reminder for you to send a welcome email to our new member, ${newMemberName}. 
-Please take a moment to introduce yourself and make them feel welcomed to the group.
-
-Best regards,
-Your Group`;
+          const subject = `\u23F0リマインド\u23F0【ご連絡】${dateString}分 ${newMemberName}の日報返信について(本日中)`;
+          const htmlBody = HtmlService.createTemplateFromFile('Email');
+          htmlBody.newMemberName = newMemberName;
+          htmlBody.oldMemberName = oldMemberName;
+          const finalHtmlBody = htmlBody.evaluate().getContent();
           console.log(subject)
-          console.log(body)
+          console.log(finalHtmlBody)
 
-          // MailApp.sendEmail(oldMemberEmail, subject, body);
+          GmailApp.sendEmail("daryl.villalobos@link-cc.co.jp", subject, "test", {htmlBody: finalHtmlBody})
         }
       }
     }
