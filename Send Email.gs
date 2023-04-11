@@ -28,7 +28,12 @@ function sendReminderEmails() {
           console.log(subject)
           // console.log(finalHtmlBody)
 
-          GmailApp.sendEmail("daryl.villalobos@link-cc.co.jp", subject, "test", {htmlBody: finalHtmlBody})
+          try {
+            GmailApp.sendEmail("daryl.villalobos@link-cc.co.jp", subject, "placeholder", {htmlBody: finalHtmlBody})
+          } catch(e) {
+            console.error("Gmail error:", e)
+
+          }
         }
       }
     }
