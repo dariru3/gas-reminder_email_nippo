@@ -20,7 +20,7 @@ function sendReminderEmails() {
         console.log("new:", newMemberName, "old:", oldMemberName, "email:", email);
 
         if (newMemberName && oldMemberName) {
-          const subject = `\u23F0リマインド\u23F0【ご連絡】${dateString}分 ${newMemberName}の日報返信について(本日中)`;
+          const subject = `\u23F0リマインド\u23F0【ご連絡】${dateString}分 ${newMemberName}の日報返信について(翌営業日まで)`;
           const htmlBody = HtmlService.createTemplateFromFile('Email');
           htmlBody.newMemberName = newMemberName;
           htmlBody.oldMemberName = oldMemberName;
@@ -29,7 +29,7 @@ function sendReminderEmails() {
           // console.log(finalHtmlBody)
 
           try {
-            GmailApp.sendEmail("daryl.villalobos@link-cc.co.jp", subject, "placeholder", {htmlBody: finalHtmlBody})
+            GmailApp.sendEmail(email, subject, "placeholder", {htmlBody: finalHtmlBody, name: "渡辺絵美子"})
           } catch(e) {
             console.error("Gmail error:", e)
 
