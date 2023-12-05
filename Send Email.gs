@@ -1,41 +1,71 @@
 function sendReminderEmails() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("シート1")
-  const numRows = sheet.getLastRow();
-  const numCols = sheet.getLastColumn();
-  const currentDate = new Date();
-  const currentDateString = Utilities.formatDate(currentDate, 'JST', 'M/d');
-  let dateFound = false
+  const sheetData = getSheetData_(SHEET_CONFIG.assignSheetname);
+  const currentDate = Utilities.formatDate(new Date(), 'JST', 'M/d');
+  sendEmailsIfDateMatches_(sheetData, currentDate);
+}
 
-  for (let row = 6; row <= numRows && !dateFound; row++) {
-    const dateCell = sheet.getRange(row, 4);
+function getSheetData_(sheetname) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetname);
+  return {
+    numRows: sheet.getLastRow(),
+    numCols: sheet.getLastColumn(),
+    sheet: sheet
+  };
+}
+
+function sendEmailsIfDateMatches_(sheetData, currentDate) {
+  const startRow = ROW_COL_CONFIG.assignStartRow;
+  const dateCol = ROW_COL_CONFIG.assignDateCol;
+  for (let row = startRow; row <= sheetData.numRows; row++) {
+    const dateCell = sheetData.sheet.getRange(row, dateCol);
+    console.log('Date cell:', dateCell.getValue());
     const dateString = Utilities.formatDate(dateCell.getValue(), 'JST', 'M/d');
     console.log("date:", dateString);
 
-    if (dateString === currentDateString) {
-      dateFound = true
-      for (let col = 5; col <= numCols; col++) {
-        const newMemberName = sheet.getRange(5, col).getValue();
-        const oldMemberName = sheet.getRange(row, col).getValue();
-        const email = getEmailFromName_(oldMemberName);
-        console.log("new:", newMemberName, "old:", oldMemberName, "email:", email);
-
-        if (newMemberName && oldMemberName) {
-          const subject = `\u23F0リマインド\u23F0【ご連絡】${dateString}分 ${newMemberName}さんの日報返信について(翌営業日まで)`;
-          const htmlBody = HtmlService.createTemplateFromFile('Email');
-          htmlBody.newMemberName = newMemberName;
-          htmlBody.oldMemberName = oldMemberName;
-          const finalHtmlBody = htmlBody.evaluate().getContent();
-          console.log(subject)
-          // console.log(finalHtmlBody)
-
-          try {
-            GmailApp.sendEmail(email, subject, "placeholder", {htmlBody: finalHtmlBody, name: "渡辺絵美子"})
-          } catch(e) {
-            console.error("Gmail error:", e)
-
-          }
-        }
-      }
+    if (dateString === currentDate) {
+      sendEmailsForRow_(sheetData, row);
+      break; // Stop the loop as the date is found
     }
+  }
+}
+
+function sendEmailsForRow_(sheetData, row) {
+  const startCol = ROW_COL_CONFIG.nameStartCol;
+  const newMemberRow = ROW_COL_CONFIG.nameNewMemberRow;
+  for (let col = startCol; col <= sheetData.numCols; col++) {
+    const newMemberName = sheetData.sheet.getRange(newMemberRow, col).getValue();
+    const currentMemberName = sheetData.sheet.getRange(row, col).getValue();
+    const [email, name] = getEmailFromName_(currentMemberName);
+    if (!email || !name) {
+      continue
+    }
+    console.log("new:", newMemberName, "current:", currentMemberName, "email:", email);
+
+    if (newMemberName && currentMemberName) {
+      sendEmail_(newMemberName, email, name);
+    }
+  }
+}
+
+function sendEmail_(newMemberName, email, name) {
+  const senderName = SHEET_CONFIG.senderName;
+  const sheetName = SHEET_CONFIG.emailBodySheetname;
+  const subjectCell = ROW_COL_CONFIG.emailSubjectCell;
+  const bodyCell = ROW_COL_CONFIG.emailBodyCell;
+  const templateSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  const subjectTemplate = templateSheet.getRange(subjectCell).getValue();
+  let bodyTemplate = templateSheet.getRange(bodyCell).getValue();
+  bodyTemplate = bodyTemplate.replace(/\n/g, "<br>");
+
+  const subject = subjectTemplate.replace("{{NEW MEMBER}}", newMemberName);
+  const htmlBodyTemplate = HtmlService.createTemplate(bodyTemplate.replace("{{NEW MEMBER}}", newMemberName).replace("{{NAME}}", name));
+
+  const finalHtmlBody = htmlBodyTemplate.evaluate().getContent();
+
+  try {
+    GmailApp.sendEmail(email, subject, "_", {htmlBody: finalHtmlBody, name: senderName});
+    console.log('Email sent!');
+  } catch(e) {
+    console.error("Gmail error:", e);
   }
 }
